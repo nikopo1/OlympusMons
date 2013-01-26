@@ -45,16 +45,54 @@ bool Mesh::loadImage(char* path) {
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 	// All materials hereafter have full specular reflectivity
 	// with a high shine
-	glMaterialfv(GL_FRONT, GL_SPECULAR,specref);
-	glMaterialfv(GL_FRONT,GL_SHININESS, mat_shininess);
+	//glMaterialfv(GL_FRONT, GL_SPECULAR,specref);
+	//glMaterialfv(GL_FRONT,GL_SHININESS, mat_shininess);
 
-	drawUndeformed(UNDEFORMED_X1, 1);
-	drawUndeformed(UNDEFORMED_X2, 2);
-	drawUndeformed(UNDEFORMED_X4, 4);
-	drawDeformed(DEFORMED_X1, 1);
-	drawDeformed(DEFORMED_X2, 2);
-	drawDeformed(DEFORMED_X4, 4);
+	//drawUndeformed(UNDEFORMED_X1, 1);
+	//drawUndeformed(UNDEFORMED_X2, 2);
+	//drawUndeformed(UNDEFORMED_X4, 4);
+	//drawDeformed(DEFORMED_X1, 1);
+	//drawDeformed(DEFORMED_X2, 2);
+	//drawDeformed(DEFORMED_X4, 4);
 
+}
+
+int Mesh::getWidth() {
+	if(!image)
+		return -1;
+	return image->width;
+}
+
+int Mesh::getHeight() {
+	if(!image)
+		return -1;
+	return image->height;
+}
+
+float* Mesh::getVertices() {
+
+	int width, height;
+	width = image->width;
+	height = image->height;
+
+	float* ret = (float*)malloc(width * height * 3 * sizeof(float));
+	if(!ret)
+		return NULL;
+
+	if(!image)
+		return NULL;
+
+	long i,j;
+	for(i = 0; i < height; i++) {
+		for(j = 0; j < width; j++) {
+			ret[(i*width + j)*3 + 0] = i;
+			ret[(i*width + j)*3 + 1] = image->imageData[i*width + j] / 255.0 * scale;
+			ret[(i*width + j)*3 + 2] = j;
+		}
+		//printf("(%f %f %f)\n",ret[i*width*3+width-3],ret[i*width*3+width-2],ret[i*width*3+width-1]);
+	}
+	
+	return ret;
 }
 
 void Mesh::drawUndeformed(GLuint list, int div) {

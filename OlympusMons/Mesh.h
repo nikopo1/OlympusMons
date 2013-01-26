@@ -31,6 +31,10 @@ public:
 	void drawUndeformed(GLuint list, int div);
 	void drawDeformed(GLuint list, int div);
 
+	int getWidth();
+	int getHeight();
+	float* getVertices();
+
 	inline float inBetween(float idiv, float y1, float y2);
 	Vector3D calculateNormal(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3);
 

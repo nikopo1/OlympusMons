@@ -152,29 +152,35 @@ void keyboard(unsigned char key, int x, int y)
 		case 'P':
 			mode = SOLID;
 			break;
-		case 'a':
+		case 'q':
 			view.lookLeft();
 			break;
-		case 'd':
+		case 'e':
 			view.lookRight();
 			break;
-		case 's':
+		case 'v':
 			view.lookUp();
 			break;
-		case 'w':
+		case 'c':
 			view.lookDown();
 			break;
-		case 'j':
+		case 'a':
 			view.moveRight(-DISTANCE);
 			break;
-		case 'l':
+		case 'd':
 			view.moveRight(DISTANCE);
 			break;
-		case 'i':
+		case 'w':
 			view.moveForward(DISTANCE);
 			break;
-		case 'k':
+		case 's':
 			view.moveForward(-DISTANCE);
+			break;
+		case 'z':
+			view.moveUp(DISTANCE);
+			break;
+		case 'x':
+			view.moveUp(-DISTANCE);
 			break;
 		case '+':
 			mesh_type = ( (mesh_type-1) + 1) % NO_MESH + 1;
@@ -197,14 +203,13 @@ void keyboard(unsigned char key, int x, int y)
 	}
 	doLighting();
 	glutPostRedisplay();
-	printf("Mesh Type = %d\n", mesh_type);
-	printf("Spotlight [%f, %f, %f]\n", spotlight.x, spotlight.y, spotlight.z);
+	//printf("Mesh Type = %d\n", mesh_type);
+	//printf("Spotlight [%f, %f, %f]\n", spotlight.x, spotlight.y, spotlight.z);
 }
 
 
 void reshape(int w, int h)
 {
-	//init();
 	view.setViewer();
 	glutPostRedisplay();
 }
@@ -215,8 +220,10 @@ void idle()
 }
 
 
-GLfloat vertices[] = { 0, -2, 2,  0, 2, 2,  2, -2, 2,  2, 2, 2,  4, -2, 2,  4, 2, 2};
-GLuint indexes[] = {0,1,2,3,4,5};
+GLfloat* vertices;
+unsigned int width, height;
+unsigned int numindexes;
+GLuint*  indexes;
 
 GLuint vertex_id, index_id;
 
@@ -234,6 +241,10 @@ void initVBO() {
 	}
 	if( glewIsSupported("GL_ARB_vertex_buffer_object") ) {
 		printf("Supported.\n");
+		int maxvertices, maxindices;
+		glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxvertices);
+		glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &maxindices);
+		printf("Maximum Number of Vertices=%d\nMax Index Values=%d\n", maxvertices, maxindices);
 		fflush(stdout);
 	} else {
 		printf("Not supported.\n");
@@ -241,13 +252,31 @@ void initVBO() {
 		return;
 	}
 
+	width = mesh.getWidth();
+	height = mesh.getHeight();
+	vertices = mesh.getVertices();
+	indexes = (GLuint*)malloc(width*height*4*sizeof(GLuint));
+
+	unsigned int p = 0;
+	for(unsigned int i = 0; i < height-1; i++) {
+		for(unsigned int j = 0; j < width-1; j++) {
+			indexes[p++] = i*width + j;
+			indexes[p++] = i*width + j + 1;
+			indexes[p++] = (i+1)*width + j + 1;
+			indexes[p++] = (i+1)*width + j;
+		}
+	}
+	
+	numindexes = p;
+	printf("%ld\n", p);
+
 	glGenBuffers(1, &vertex_id);
 	glBindBuffer(GL_ARRAY_BUFFER,  vertex_id);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, width * height * 3 * sizeof(float), vertices, GL_STATIC_DRAW);
 	
 	glGenBuffers(1, &index_id);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,  index_id);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexes), indexes, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, width * height * 4 * sizeof(GLuint), indexes, GL_STATIC_DRAW);
 }
 
 
@@ -274,9 +303,8 @@ void displayCB()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);   //The starting point of the VBO, for the vertices
 //	glVertexPointer(3, GL_FLOAT, 0, NULL);
 	
-	glDrawElements(GL_TRIANGLE_STRIP, 6, GL_UNSIGNED_INT, 0 /*index_offset*/);
-//	glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, indexes);
-	printf("%d\n",glGetError());
+	glDrawElements(GL_QUADS, numindexes, GL_UNSIGNED_INT, 0 /*index_offset*/);
+//	glDrawElements(GL_QUADS, numindexes, GL_UNSIGNED_INT, indexes);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -300,12 +328,9 @@ int main(int argc, char** argv)
 	glutInitWindowPosition(100,100);
 	
 	mainWindow = glutCreateWindow("Animatie");
-	/*
-	init();
-
+	//init();
 	if( !mesh.loadImage("half.tga") )
 		return 0;
-	*/
 	initVBO();
 
 	glutDisplayFunc(displayCB);

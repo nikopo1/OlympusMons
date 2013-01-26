@@ -32,6 +32,10 @@ void Viewer::moveRight(int distance) {
 	position.z = position.z + right.z * distance;
 	setViewer();
 }
+void Viewer::moveUp(int distance) {
+	position.y += distance;
+	setViewer();
+}
 
 void Viewer::lookUp() {
 	Vector3D oldforward = forward;
@@ -91,9 +95,9 @@ void Viewer::setViewer() {
 		      position.x + forward.x, position.y + forward.y, position.z + forward.z,   //si priveste in directia negativa a axei oy
 			  up.x, up.y, up.z);
 
-	printf("*****************************\n");
+	/*printf("*****************************\n");
 	printf("position=[%lf, %lf, %lf]\n", position.x, position.y, position.z);
 	printf("forward=[%lf, %lf, %lf]\n", forward.x, forward.y, forward.z);
 	printf("right=[%lf, %lf, %lf]\n", right.x, right.y, right.z);
-	printf("up=[%lf, %lf, %lf]\n", up.x, up.y, up.z);
+	printf("up=[%lf, %lf, %lf]\n", up.x, up.y, up.z);*/
 }

@@ -17,6 +17,7 @@ public:
 
 	void moveForward(int distance);
 	void moveRight(int distance);
+	void moveUp(int distance);
 
 	void lookUp();
 	void lookDown();
