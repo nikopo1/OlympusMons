@@ -43,7 +43,7 @@ void init(void)
 	GLfloat ambientLight[] = { 0.1f, 0.1f, 0.1f, 0.1f };
 	GLfloat diffuseLight[] = { 0.2f, 0.2f, 0.2f, 0.1f };
 	GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f};
-	GLfloat lightPos[] = { -50.f, 25.0f, -50.0f, 1.0f };
+	GLfloat lightPos[] = { 50.f, 100.0f, 50.0f, 1.0f };
 
 	// Enable lighting
 	glEnable(GL_LIGHTING);
@@ -220,11 +220,10 @@ void idle()
 }
 
 
-GLfloat* vertices;
+point_t* vertices;
 unsigned int width, height;
 unsigned int numindexes;
 GLuint*  indexes;
-
 GLuint vertex_id, index_id;
 
 void initVBO() {
@@ -233,6 +232,19 @@ void initVBO() {
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glShadeModel(GL_SMOOTH);
+
+	GLfloat ambientLightColor [] =	{0.2,0.2,0.2,1.0};
+	GLfloat diffuseLight[] =		{ 0.9f, 0.9f, 0.9f, 0.1f };
+	GLfloat lightPos[] =			{ 50.f, 60.0f, 50.0f, 1.0f };
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientLightColor);
+    glEnable(GL_LIGHTING);
+
+    glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuseLight);
+    glLightfv(GL_LIGHT0,GL_POSITION,lightPos);
+    glEnable(GL_LIGHT0);
+
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
 
 	GLenum eroare = glewInit();
 	
@@ -270,9 +282,11 @@ void initVBO() {
 	numindexes = p;
 	printf("%ld\n", p);
 
+	computeNormals(height, width, vertices);
+
 	glGenBuffers(1, &vertex_id);
 	glBindBuffer(GL_ARRAY_BUFFER,  vertex_id);
-	glBufferData(GL_ARRAY_BUFFER, width * height * 3 * sizeof(float), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, width * height * sizeof(point_t), vertices, GL_STATIC_DRAW);
 	
 	glGenBuffers(1, &index_id);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,  index_id);
@@ -294,14 +308,19 @@ void displayCB()
 	glPushMatrix();
 
 	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_INDEX_ARRAY);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_id);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
 
 	glEnableVertexAttribArray(0);    //We like submitting vertices on stream 0 for no special reason
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);   //The starting point of the VBO, for the vertices
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(point_t), NULL);   //The starting point of the VBO, for the vertices
+
+	//glEnableVertexAttribArray(1);    //We like submitting normals on stream 1 for no special reason
+//	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(point_t), (const GLvoid*)(3*sizeof(float)));     //The starting point of normals, 12 bytes away
 //	glVertexPointer(3, GL_FLOAT, 0, NULL);
+	glNormalPointer(GL_FLOAT, sizeof(point_t), (const GLvoid*)(3*sizeof(float))); 
 	
 	glDrawElements(GL_QUADS, numindexes, GL_UNSIGNED_INT, 0 /*index_offset*/);
 //	glDrawElements(GL_QUADS, numindexes, GL_UNSIGNED_INT, indexes);
@@ -310,6 +329,7 @@ void displayCB()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glDisableClientState(GL_INDEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 
 	glutWireCube(2.0);

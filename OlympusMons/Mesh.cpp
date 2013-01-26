@@ -7,7 +7,7 @@
 Mesh::Mesh(void)
 {
 	pixelstep = 1.0;
-	scale = 15.0;
+	scale = 20.0;
 }
 
 
@@ -69,13 +69,13 @@ int Mesh::getHeight() {
 	return image->height;
 }
 
-float* Mesh::getVertices() {
+point_t* Mesh::getVertices() {
 
 	int width, height;
 	width = image->width;
 	height = image->height;
 
-	float* ret = (float*)malloc(width * height * 3 * sizeof(float));
+	point_t* ret = (point_t*)malloc(width * height * sizeof(point_t));
 	if(!ret)
 		return NULL;
 
@@ -85,9 +85,9 @@ float* Mesh::getVertices() {
 	long i,j;
 	for(i = 0; i < height; i++) {
 		for(j = 0; j < width; j++) {
-			ret[(i*width + j)*3 + 0] = i;
-			ret[(i*width + j)*3 + 1] = image->imageData[i*width + j] / 255.0 * scale;
-			ret[(i*width + j)*3 + 2] = j;
+			ret[(i*width + j)].position[0] = i;
+			ret[(i*width + j)].position[1] = image->imageData[i*width + j] / 255.0 * scale;
+			ret[(i*width + j)].position[2] = j;
 		}
 		//printf("(%f %f %f)\n",ret[i*width*3+width-3],ret[i*width*3+width-2],ret[i*width*3+width-1]);
 	}
@@ -206,3 +206,210 @@ Vector3D Mesh::calculateNormal(float x1, float y1, float z1, float x2, float y2,
  
 		return a.CrossProduct(b).Normalize();
 }
+
+Vector3D addNormalsForEdges(Vector3D center,Vector3D px1,Vector3D px2,Vector3D px3)
+{
+	Vector3D v1 = px1-center;
+	Vector3D v2 = px2-center;
+	Vector3D v3 = px3-center;
+
+	Vector3D norm1 = v1.CrossProduct(v2);
+	norm1=norm1.Normalize();
+	Vector3D norm2 = v3.CrossProduct(v2);
+	norm2=norm2.Normalize();
+
+	Vector3D sum = norm1+norm2;
+	return sum.Normalize();
+}
+
+void computeNomalsForCorners(int i,int j,int length, int width, float*x,float*y,float*z,Vector3D * normals)
+{
+	//stanga sus
+	if(i==0 && j==0)
+	{
+		Vector3D centru = Vector3D(x[0],y[0],z[0]);
+		Vector3D dreapta = Vector3D(x[1],y[1],z[1]);
+		Vector3D jos = Vector3D(x[width],y[width],z[width]);
+
+		Vector3D v1 = dreapta-centru;
+		Vector3D v2 = jos-centru;
+
+		Vector3D norm = v1.CrossProduct(v2);
+		norm = norm.Normalize();
+		//printf("Primul X%f Y%f Z%f",norm.x,norm.y,norm.z);
+		normals[0]=norm;
+
+	}
+	//dreapta sus
+	if(i==0 && j==width-1)
+	{
+		Vector3D centru = Vector3D(x[width-1],y[width-1],z[width-1]);
+		Vector3D stanga = Vector3D(x[width-2],y[width-2],z[width-2]);
+		Vector3D jos = Vector3D(x[2*width-1],y[2*width-1],z[2*width-1]);
+
+		Vector3D v1 = jos-centru;
+		Vector3D v2 = stanga-centru;
+
+		Vector3D norm = v1.CrossProduct(v2);
+		norm = norm.Normalize();
+
+		normals[width-1]=norm;
+
+	}
+	//dreapta jos
+	if(i==length-1 && j==width-1)
+	{
+		Vector3D centru = Vector3D(x[i*width+j],y[i*width+j],z[i*width+j]);
+		Vector3D sus = Vector3D(x[(i-1)*width+j],y[(i-1)*width+j],z[(i-1)*width+j]);
+		Vector3D stanga = Vector3D(x[i*width+j-1],y[i*width+j-1],z[i*width+j-1]);
+
+		Vector3D v1 = sus-centru;
+		Vector3D v2 = stanga-centru;
+
+		Vector3D norm = v1.CrossProduct(v2);
+		norm = norm.Normalize();
+		
+		normals[i*width+j]=norm;
+	}
+	//stanga jos
+	if(i==length-1 && j==0)
+	{
+		Vector3D centru = Vector3D(x[i*width+j],y[i*width+j],z[i*width+j]);
+		Vector3D sus = Vector3D(x[(i-1)*width+j],y[(i-1)*width+j],z[(i-1)*width+j]);
+		Vector3D dreapta = Vector3D(x[i*width+j+1],y[i*width+j+1],z[i*width+j+1]);
+
+		Vector3D v1 = dreapta-centru;
+		Vector3D v2 = sus-centru;
+		
+		Vector3D norm = v1.CrossProduct(v2);
+		norm = norm.Normalize();
+
+		normals[i*width+j]=norm;
+
+	}
+}
+
+void computeNormalsForEdges(int i, int j,int length, int width, float*x,float*y,float*z,Vector3D * normals)
+{
+	//sus
+	if(i==0 && j!=0 && j!= width-1)
+	{
+		Vector3D centru = Vector3D(x[i*width+j],y[i*width+j],z[i*width+j]);
+		Vector3D stanga = Vector3D(x[i*width+j-1],y[i*width+j]-1,z[i*width+j-1]);
+		Vector3D jos = Vector3D(x[(i+1)*width+j],y[(i+1)*width+j],z[(i+1)*width+j]);
+		Vector3D dreapta = Vector3D(x[i*width+j+1],y[i*width+j+1],z[i*width+j+1]);
+		
+		normals[i*width+j]=addNormalsForEdges(centru,stanga,jos,dreapta);
+	}
+	//dreapta
+	if(i!=0 && i!=length-1 && j==width-1)
+	{
+		Vector3D centru = Vector3D(x[i*width+j],y[i*width+j],z[i*width+j]);
+		Vector3D sus = Vector3D(x[(i-1)*width+j-1],y[(i-1)*width+j]-1,z[(i-1)*width+j-1]);
+		Vector3D jos = Vector3D(x[(i+1)*width+j],y[(i+1)*width+j],z[(i+1)*width+j]);
+		Vector3D stanga = Vector3D(x[i*width+j-1],y[i*width+j-1],z[i*width+j-1]);
+		
+
+		normals[i*width+j]=addNormalsForEdges(centru,stanga,jos,sus);
+	}
+	//jos
+	if(i==length-1 && j!= width-1 && j!=0)
+	{
+		Vector3D centru = Vector3D(x[i*width+j],y[i*width+j],z[i*width+j]);
+		Vector3D sus = Vector3D(x[(i-1)*width+j-1],y[(i-1)*width+j]-1,z[(i-1)*width+j-1]);
+		Vector3D stanga = Vector3D(x[i*width+j-1],y[i*width+j-1],z[i*width+j-1]);
+		Vector3D dreapta = Vector3D(x[i*width+j+1],y[i*width+j+1],z[i*width+j+1]);
+
+		normals[i*width+j]=addNormalsForEdges(centru,stanga,dreapta,sus);
+
+	}
+	//stanga
+	if(i!=0 && i!=length-1 && j==0)
+	{
+		Vector3D centru = Vector3D(x[i*width+j],y[i*width+j],z[i*width+j]);
+		Vector3D sus = Vector3D(x[(i-1)*width+j-1],y[(i-1)*width+j]-1,z[(i-1)*width+j-1]);
+		Vector3D jos = Vector3D(x[(i+1)*width+j],y[(i+1)*width+j],z[(i+1)*width+j]);
+		Vector3D dreapta = Vector3D(x[i*width+j+1],y[i*width+j+1],z[i*width+j+1]);
+
+
+		normals[i*width+j]=addNormalsForEdges(centru,jos,dreapta,sus);
+	}
+}
+
+void computeNormalsForInterior(int i, int j,int length, int width, float*x,float*y,float*z,Vector3D * normals)
+{
+	//compute interior
+	if(i>0 && i<length-1 && j>0 && j<width-1)
+	{
+		Vector3D centru = Vector3D(x[i*width+j],y[i*width+j],z[i*width+j]);
+		Vector3D sus = Vector3D(x[(i-1)*width+j-1],y[(i-1)*width+j]-1,z[(i-1)*width+j-1]);
+		Vector3D jos = Vector3D(x[(i+1)*width+j],y[(i+1)*width+j],z[(i+1)*width+j]);
+		Vector3D stanga = Vector3D(x[i*width+j-1],y[i*width+j-1],z[i*width+j-1]);
+		Vector3D dreapta = Vector3D(x[i*width+j+1],y[i*width+j+1],z[i*width+j+1]);
+
+		Vector3D v1 = sus-centru;
+		Vector3D v2 = dreapta-centru;
+		Vector3D v3 = jos-centru;
+		Vector3D v4 = stanga-centru;
+
+		Vector3D norm1 = v1.CrossProduct(v2);
+		norm1 = norm1.Normalize();
+		Vector3D norm2 = v2.CrossProduct(v3);
+		norm2 = norm2.Normalize();
+		Vector3D norm3 = v3.CrossProduct(v4);
+		norm3 = norm3.Normalize();
+		Vector3D norm4 = v4.CrossProduct(v1);
+		norm4 = norm4.Normalize();
+
+		Vector3D sum = norm1+norm2+norm3+norm4;
+		sum = sum.Normalize();
+			
+		normals[i*width+j]=sum;
+	}
+}
+
+void computeNormals(int length, int width, point_t* points)
+{
+	Vector3D* normals = (Vector3D*)malloc(length*width*sizeof(Vector3D));
+	if(normals == NULL){printf("Eroare la alocarea spatiului pentru normale");return;}
+	
+	float * x = (float*)malloc(length*width*sizeof(float));
+	if(x==NULL) {printf("Eroare la alocarea spatiului pt x"); return;}
+
+	float * y = (float*)malloc(length*width*sizeof(float));
+	if(y==NULL) {printf("Eroare la alocarea spatiului pt y"); return;}
+	
+	float * z = (float*)malloc(length*width*sizeof(float));
+	if(z==NULL) {printf("Eroare la alocarea spatiului pt z"); return;}
+
+	//copiez din vectorul mare in cele 3 mici
+	for(int i=0;i<width*length;i++)
+	{
+		x[i]=points[i].position[0];
+		y[i]=points[i].position[1];
+		z[i]=points[i].position[2];
+	}
+
+	for(int i=0;i<length;i++)
+	{
+		for(int j=0;j<width;j++)
+		{
+			computeNomalsForCorners(i,j,length,width,x,y,z,normals);
+			computeNormalsForEdges(i,j,length,width,x,y,z,normals);
+			computeNormalsForInterior(i,j,length,width,x,y,z,normals);
+		}
+	}
+
+	free(x);
+	free(y);
+	free(z);
+	
+	for (int i = 0; i < width*length; ++i)
+	{
+		points[i].normal[0] = normals[i].x;
+		points[i].normal[1] = normals[i].y;
+		points[i].normal[2] = normals[i].z;
+	}
+	free(normals);
+}
+
