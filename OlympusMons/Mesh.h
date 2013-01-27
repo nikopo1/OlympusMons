@@ -39,6 +39,8 @@ public:
 	void drawUndeformed(GLuint list, int div);
 	void drawDeformed(GLuint list, int div);
 
+	void drawDeformed(unsigned int minx, unsigned int maxx, unsigned int miny, unsigned int maxy, int div);
+
 	int getWidth();
 	int getHeight();
 	point_t* getVertices();

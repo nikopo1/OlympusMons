@@ -29,103 +29,23 @@ Viewer view(0,6,0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0);
 int mainWindow;
 Mesh mesh;
 int mesh_type = 1;
+
 Vector3D spotlight(0.0, 15.0, 0.0);
 
 GLint textura_iarba[4];
+point_t* vertices;
+GLuint*  indexes;
+unsigned int numindexes;
 
-void init(void)
-{
+unsigned int width, height;
+unsigned int perimeter = 16;
 
-	glClearColor(0.0, 0.0, 0.0, 0.0);
-	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_NORMALIZE);
-	glShadeModel(GL_SMOOTH);
-
-		// Light values and coord inates
-	GLfloat ambientLight[] = { 0.1f, 0.1f, 0.1f, 0.1f };
-	GLfloat diffuseLight[] = { 0.2f, 0.2f, 0.2f, 0.1f };
-	GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f};
-	GLfloat lightPos[] = { 50.f, 100.0f, 50.0f, 1.0f };
-
-	// Enable lighting
-	glEnable(GL_LIGHTING);
-	// Setup and enable light 0
-	glLightfv(GL_LIGHT0,GL_AMBIENT,ambientLight);
-	glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuseLight);
-	glLightfv(GL_LIGHT0,GL_SPECULAR,specular);
-	glLightfv(GL_LIGHT0,GL_POSITION,lightPos);
-	glEnable(GL_LIGHT0);
-
-	GLfloat light1_ambient[] = { 0.2, 0.2, 0.2, 1.0 };
-	GLfloat light1_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
-	GLfloat light1_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-	GLfloat light1_position[] = { spotlight.x, spotlight.y, spotlight.z, 1.0 };
-	GLfloat spot_direction[] = { 0.0, -1.0, 0.0 };
-	glLightfv(GL_LIGHT1, GL_AMBIENT, light1_ambient);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, light1_specular);
-	glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
-	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 45.0);
-	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spot_direction);
-	//glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 2.0);
-
-	glEnable(GL_LIGHT1);
-
-	// Enable color tracking
-	glEnable(GL_COLOR_MATERIAL);
-	// Set Material properties to follow glColor values
-	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-
-	mesh_type = UNDEFORMED_X1;
-}
+GLuint vertex_id, index_id;
 
 
 void doLighting() {
 	GLfloat light1_position[] = { spotlight.x, spotlight.y, spotlight.z, 1.0 };
 	glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
-}
-
-
-// functia pentru desenarea scenei 3D
-void drawScene()
-{
-	// seteaza modul de desenare al poligoanelor
-	if(mode == WIRE)
-		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-	if(mode == SOLID)
-		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-	
-	switch(mesh_type) {
-	case UNDEFORMED_X1:
-		glCallList(UNDEFORMED_X1);
-		break;
-	case UNDEFORMED_X2:
-		glCallList(UNDEFORMED_X2);
-		break;
-	case UNDEFORMED_X4:
-		glCallList(UNDEFORMED_X4);
-		break;
-	case DEFORMED_X1:
-		glCallList(DEFORMED_X1);
-		break;
-	case DEFORMED_X2:
-		glCallList(DEFORMED_X2);
-		break;
-	case DEFORMED_X4:
-		glCallList(DEFORMED_X4);
-		break;
-	}
-}
-
-// functia de display
-void display(void)
-{
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	drawScene();
-
-	glutSwapBuffers();
 }
 
 
@@ -186,10 +106,10 @@ void keyboard(unsigned char key, int x, int y)
 			view.moveUp(-DISTANCE);
 			break;
 		case '+':
-			mesh_type = ( (mesh_type-1) + 1) % NO_MESH + 1;
+			perimeter += 1;
 			break;
 		case '-':
-			mesh_type = ( (mesh_type-1) - 1) % NO_MESH + 1;
+			perimeter = perimeter > 0? perimeter-1:0;
 			break;
 		case 't':
 			spotlight.x = spotlight.x + 1;
@@ -221,13 +141,6 @@ void idle()
 {
 	//glutPostRedisplay();
 }
-
-
-point_t* vertices;
-unsigned int width, height;
-unsigned int numindexes;
-GLuint*  indexes;
-GLuint vertex_id, index_id;
 
 void setTexCoords()
 {
@@ -347,7 +260,6 @@ void displayCB()
 
 	view.setViewer();
 
-	unsigned int perimeter = 8;
 	unsigned int camera_x = (unsigned int)view.getPosition(0);
 	unsigned int camera_y = (unsigned int)view.getPosition(1);
 	unsigned int camera_z = (unsigned int)view.getPosition(2);
@@ -375,7 +287,7 @@ void displayCB()
 		unsigned int p = 0;
 		for(unsigned int i = 0; i < height-1; i++) {
 			for(unsigned int j = 0; j < width-1; j++) {
-				if(pminx < i && i < pmaxx && pminz < j && j < pmaxz)
+				if(pminx <= i && i+1 <= pmaxx && pminz <= j && j+1 <= pmaxz)
 					continue;
 				ptr[p++] = i*width + j;
 				ptr[p++] = i*width + j + 1;
@@ -397,7 +309,6 @@ void displayCB()
 
 	//glDrawElements(GL_QUADS, numindexes, GL_UNSIGNED_INT, (const GLvoid *)indexes);
 
-	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -407,6 +318,9 @@ void displayCB()
 	glDisableClientState(GL_NORMAL_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 
+	// TODO: functia drawDeformed trebuie completata cu adaugarea de culoare si 
+	// normala pentru fiecare vertex calculat din ea
+	mesh.drawDeformed(pminx,pmaxx+1,pminz,pmaxz+1,4);
 	
 	glBegin(GL_QUADS);
 		glTexCoord2f(0,0);			glVertex3f(0,0,0);

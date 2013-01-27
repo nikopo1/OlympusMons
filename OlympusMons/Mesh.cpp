@@ -148,6 +148,9 @@ void Mesh::drawUndeformed(GLuint list, int div) {
 
 void Mesh::drawDeformed(GLuint list, int div) {
 
+	if(image == NULL)
+		return;
+
 	int i,j;
 	float step = pixelstep / (float)div;
 	float idiv;
@@ -162,9 +165,6 @@ void Mesh::drawDeformed(GLuint list, int div) {
 
 	width = image->width;
 	height = image->height;
-
-	if(image == NULL)
-		return;
 
 	glNewList(list,GL_COMPILE);
 	glColor3f( 0.25, 1.0, 0);
@@ -188,7 +188,6 @@ void Mesh::drawDeformed(GLuint list, int div) {
 
 					normal1 = calculateNormal(i+idiv, y1div, j+jdiv, i+idiv, y2div, j+jdiv+step, i+idiv+step, y3div, j+jdiv+step);
 					normal2 = calculateNormal(i+idiv, y1div, j+jdiv, i+idiv+step, y3div, j+jdiv+step, i+idiv+step, y4div, j+jdiv);
-
 					normal = (normal1 + normal2).Normalize();
 					glNormal3f(normal.x, normal.y, normal.z);
 					
@@ -200,6 +199,58 @@ void Mesh::drawDeformed(GLuint list, int div) {
 		}
 	glEnd();
 	glEndList();
+}
+
+void Mesh::drawDeformed(unsigned int minx, unsigned int maxx, unsigned int miny, unsigned int maxy, int div) {
+
+	if(image == NULL)
+		return;
+
+	int i,j;
+	float step = pixelstep / (float)div;
+	float idiv;
+	float jdiv;
+
+	float y1, y2, y3, y4;
+	float y1div, y2div, y3div, y4div;
+	Vector3D normal1, normal2, normal;
+
+	int width, height;
+	width = image->width;
+	height = image->height;
+
+	glBegin(GL_QUADS);
+	for(i = minx; i < maxx-1; i++)
+		for(j = miny; j < maxy-1; j++) {
+			
+			y1 = (float)image->imageData[i*width + j] / 255.0 * scale;
+			y2 = (float)image->imageData[i*width + j+1] / 255.0 * scale;
+			y3 = (float)image->imageData[(i+1)*width + j+1] / 255.0 * scale;
+			y4 = (float)image->imageData[(i+1)*width + j] / 255.0 * scale;
+
+			for(idiv = 0; idiv < pixelstep; idiv+=step)
+				for(jdiv = 0; jdiv < pixelstep; jdiv+=step)
+				{
+					y1div = inBetween(jdiv, inBetween(idiv, y1, y4), inBetween(idiv, y2, y3));
+					y2div = inBetween(jdiv+step, inBetween(idiv, y1, y4), inBetween(idiv, y2, y3));
+					y3div = inBetween(jdiv+step, inBetween(idiv+step, y1, y4), inBetween(idiv+step, y2, y3));
+					y4div = inBetween(jdiv, inBetween(idiv+step, y1, y4), inBetween(idiv+step, y2, y3));
+					// TODO: adaugare normale si culori aici
+
+					// astea sunt niste noromale calculate de mine, nu prea sunt decente pentru ca sunt per suprafata
+					normal1 = calculateNormal(i+idiv, y1div, j+jdiv, i+idiv, y2div, j+jdiv+step, i+idiv+step, y3div, j+jdiv+step);
+					normal2 = calculateNormal(i+idiv, y1div, j+jdiv, i+idiv+step, y3div, j+jdiv+step, i+idiv+step, y4div, j+jdiv);
+
+					normal = (normal1 + normal2).Normalize();
+					glNormal3f(normal.x, normal.y, normal.z);
+					
+					glVertex3f(i+idiv, y1div, j+jdiv);			//1
+					glVertex3f(i+idiv, y2div, j+jdiv+step);		//2
+					glVertex3f(i+idiv+step, y3div, j+jdiv+step);//3
+					glVertex3f(i+idiv+step, y4div, j+jdiv);		//4					
+				}
+		}
+	glEnd();
 }
 
 inline float Mesh::inBetween(float idiv, float y1, float y2) {
