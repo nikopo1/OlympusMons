@@ -20,6 +20,7 @@ typedef struct _point_t {
 	GLfloat position[3];
 	GLfloat normal[3];
 	GLfloat texture[2];
+	GLfloat color[4];
 } point_t;
 
 
@@ -44,7 +45,7 @@ public:
 
 	inline float inBetween(float idiv, float y1, float y2);
 	Vector3D calculateNormal(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3);
-
+	void Mesh::setColor(point_t * points, int i , int j);
 	~Mesh(void);
 };
 
