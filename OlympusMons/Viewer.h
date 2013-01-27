@@ -26,6 +26,7 @@ public:
 
 	void setViewer();
 	void printPosition();
+	double getPosition(int coordinate);
 
 	~Viewer(void);
 };

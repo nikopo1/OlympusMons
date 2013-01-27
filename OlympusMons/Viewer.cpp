@@ -104,6 +104,9 @@ void Viewer::setViewer() {
 	printf("right=[%lf, %lf, %lf]\n", right.x, right.y, right.z);
 	printf("up=[%lf, %lf, %lf]\n", up.x, up.y, up.z);*/
 }
+
+
+
 void Viewer::printPosition()
 {
 	//printf("*****************************\n");
@@ -111,4 +114,14 @@ void Viewer::printPosition()
 	//printf("forward=[%lf, %lf, %lf]\n", forward.x, forward.y, forward.z);
 	///printf("right=[%lf, %lf, %lf]\n", right.x, right.y, right.z);
 	//printf("up=[%lf, %lf, %lf]\n", up.x, up.y, up.z);
+}
+
+double Viewer::getPosition(int coordinate) {
+	if(coordinate == 0)
+		return position.x;
+	else if(coordinate == 1)
+		return position.y;
+	else if(coordinate == 2)
+		return position.z;
+	else return -1;
 }
