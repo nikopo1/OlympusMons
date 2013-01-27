@@ -25,7 +25,7 @@
 // modul initial in care sunt desenate poligoanele
 int mode = SOLID;
 
-Viewer view(0,6,0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0);
+Viewer view(230,6,210, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0);
 int mainWindow;
 Mesh mesh;
 int mesh_type = 1;

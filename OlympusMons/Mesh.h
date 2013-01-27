@@ -55,6 +55,7 @@ public:
 	void initColors();
 	void setColor(point_t * points, int i , int j);
 	Vector3D computeColorPerVertex(float height);
+	Vector3D* computeNormalsForTesArea(int testHeight, int tesWidth, float *x, float*y, float * z);
 	~Mesh(void);
 
 };

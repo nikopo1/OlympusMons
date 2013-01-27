@@ -269,9 +269,39 @@ void Mesh::drawDeformed(unsigned int minx, unsigned int maxx, unsigned int miny,
 			y2 = (float)image->imageData[i*width + j+1] / 255.0 * scale;
 			y3 = (float)image->imageData[(i+1)*width + j+1] / 255.0 * scale;
 			y4 = (float)image->imageData[(i+1)*width + j] / 255.0 * scale;
+			
+			int tesHeight = pixelstep/step+1;
+			int tesWidth = pixelstep/step+1;
+			int tesX,tesY;
+			
+			float * xTes = (float*)malloc(tesWidth*tesHeight*sizeof(float));
+			float * yTes = (float*)malloc(tesWidth*tesHeight*sizeof(float));
+			float * zTes = (float*)malloc(tesWidth*tesHeight*sizeof(float));
+			
+			
+			//precalcularea punctelor intermediare si a normalelor
+			for(tesX=0,idiv = 0; idiv < pixelstep;tesX++,idiv+=step)
+			{
+				for(tesY=0,jdiv = 0; jdiv < pixelstep;tesY++,jdiv+=step)
+				{
+					
+					y1div = inBetween(jdiv, inBetween(idiv, y1, y4), inBetween(idiv, y2, y3));
+					y2div = inBetween(jdiv+step, inBetween(idiv, y1, y4), inBetween(idiv, y2, y3));
+					y3div = inBetween(jdiv+step, inBetween(idiv+step, y1, y4), inBetween(idiv+step, y2, y3));
+					y4div = inBetween(jdiv, inBetween(idiv+step, y1, y4), inBetween(idiv+step, y2, y3));
 
-			for(idiv = 0; idiv < pixelstep; idiv+=step)
-				for(jdiv = 0; jdiv < pixelstep; jdiv+=step)
+					xTes[tesX*tesWidth+tesY] = i+idiv;				yTes[tesX*tesWidth+tesY]= y1div;		  zTes[tesX*tesWidth+tesY] = j+jdiv;
+					xTes[tesX*tesWidth+tesY+1] = i+idiv;			yTes[tesX*tesWidth+tesY+1] = y2div;	      zTes[tesX*tesWidth+tesY+1] = j+jdiv+step;
+					xTes[(tesX+1)*tesWidth+tesY+1] = i+idiv+step;   yTes[(tesX+1)*tesWidth+tesY+1] = y3div;   zTes[(tesX+1)*tesWidth+tesY+1] = j+jdiv+step;
+					xTes[(tesX+1)*tesWidth+tesY] = i+idiv+step;		yTes[(tesX+1)*tesWidth+tesY] = y4div;	  zTes[(tesX+1)*tesWidth+tesY] = j+jdiv;
+				}
+			}
+			Vector3D * normals = computeNormalsForTesArea(tesHeight,tesWidth,xTes,yTes,zTes);
+			
+
+			for(tesX=0,idiv = 0; idiv < pixelstep; idiv+=step,tesX++)
+			{
+				for(tesY=0,jdiv = 0; jdiv < pixelstep; jdiv+=step,tesY++)
 				{
 					y1div = inBetween(jdiv, inBetween(idiv, y1, y4), inBetween(idiv, y2, y3));
 					y2div = inBetween(jdiv+step, inBetween(idiv, y1, y4), inBetween(idiv, y2, y3));
@@ -282,26 +312,35 @@ void Mesh::drawDeformed(unsigned int minx, unsigned int maxx, unsigned int miny,
 					// astea sunt niste noromale calculate de mine, nu prea sunt decente pentru ca sunt per suprafata
 					normal1 = calculateNormal(i+idiv, y1div, j+jdiv, i+idiv, y2div, j+jdiv+step, i+idiv+step, y3div, j+jdiv+step);
 					normal2 = calculateNormal(i+idiv, y1div, j+jdiv, i+idiv+step, y3div, j+jdiv+step, i+idiv+step, y4div, j+jdiv);
-					//normal2 = calculateNormal(i+idiv, y1div, j+jdiv,i+idiv+step, y4div, j+jdiv,i+idiv+step, y3div, j+jdiv+step);
 					normal = (normal1 + normal2).Normalize();
-					//if(onEdge());
-					//normal = computeNormalPerVertex(idiv,jdiv,);
-					
+					glNormal3f(normal.x,normal.y,normal.z);
+
 					color1 = computeColorPerVertex(y1div);
 					color2 = computeColorPerVertex(y2div);
 					color3 = computeColorPerVertex(y3div);
 					color4 = computeColorPerVertex(y4div);
 
-					glNormal3f(normal.x, normal.y, normal.z);
+					//glNormal3f(normals[tesX*tesWidth+tesY].x, normals[tesX*tesWidth+tesY].y, normals[tesX*tesWidth+tesY].z);	//1
 					glColor3f(color1.x,color1.y,color1.z);
-					glVertex3f(i+idiv, y1div, j+jdiv);			//1
+					glVertex3f(i+idiv, y1div, j+jdiv);			
+
+					//glNormal3f(normals[tesX*tesWidth+tesY+1].x, normals[tesX*tesWidth+tesY+1].y, normals[tesX*tesWidth+tesY+1].z);	//2
 					glColor3f(color2.x,color2.y,color2.z);
-					glVertex3f(i+idiv, y2div, j+jdiv+step);		//2
+					glVertex3f(i+idiv, y2div, j+jdiv+step);		
+
+					//glNormal3f(normals[(tesX+1)*tesWidth+tesY+1].x, normals[(tesX+1)*tesWidth+tesY+1].y, normals[(tesX+1)*tesWidth+tesY+1].z);	//3
 					glColor3f(color3.x,color3.y,color3.z);
-					glVertex3f(i+idiv+step, y3div, j+jdiv+step);//3
+					glVertex3f(i+idiv+step, y3div, j+jdiv+step);
+
+					//glNormal3f(normals[(tesX+1)*tesWidth+tesY].x, normals[(tesX+1)*tesWidth+tesY].y, normals[(tesX+1)*tesWidth+tesY].z);	//4
 					glColor3f(color4.x,color4.y,color4.z);
-					glVertex3f(i+idiv+step, y4div, j+jdiv);		//4					
+					glVertex3f(i+idiv+step, y4div, j+jdiv);							
 				}
+				
+			}
+
+			free(xTes); free(yTes); free(zTes);
+			free(normals);
 		}
 	glEnd();
 }
@@ -335,10 +374,10 @@ Vector3D Mesh::computeColorPerVertex(float height)
 		return Vector3D(red,green,blue);
 	}
 	//zapada
-	else if(height >= minSnow)
+	else
 	{
 		float pondere = (height - minSnow)*gap/snowDif;
-		float red=snowColor[0]*pondere, green = snowColor[1]*pondere, blue = snowColor[2]*pondere;
+		float red=snowColor[0]*1/pondere, green = snowColor[1]*1/pondere, blue = snowColor[2]*1/pondere;
 		return Vector3D(red,green,blue);
 	}
 }
@@ -522,6 +561,25 @@ void computeNormalsForInterior(int i, int j,int length, int width, float*x,float
 			
 		normals[i*width+j]=sum;
 	}
+}
+
+
+Vector3D* Mesh::computeNormalsForTesArea(int testHeight, int tesWidth, float *x, float*y, float * z)
+{
+	Vector3D* normals = (Vector3D*)malloc(testHeight*tesWidth*sizeof(Vector3D));
+	if(normals == NULL){printf("Eroare la alocarea spatiului pentru normale teselare");return NULL;}
+
+	for(int i=0;i<testHeight;i++)
+	{
+		for(int j=0;j<tesWidth;j++)
+		{
+			computeNomalsForCorners(i,j,testHeight,tesWidth,x,y,z,normals);
+			computeNormalsForEdges(i,j,testHeight,tesWidth,x,y,z,normals);
+			computeNormalsForInterior(i,j,testHeight,tesWidth,x,y,z,normals);
+		}
+	}
+	return normals;
+	
 }
 
 void computeNormals(int length, int width, point_t* points)
