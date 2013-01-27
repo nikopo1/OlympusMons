@@ -25,16 +25,19 @@ void Viewer::moveForward(int distance) {
 	position.x = position.x + forward.x * distance;
 	position.z = position.z + forward.z * distance;
 	setViewer();
+	printPosition();
 }
 void Viewer::moveRight(int distance) {
 	//position = position - right * distance;
 	position.x = position.x + right.x * distance;
 	position.z = position.z + right.z * distance;
 	setViewer();
+	printPosition();
 }
 void Viewer::moveUp(int distance) {
 	position.y += distance;
 	setViewer();
+	printPosition();
 }
 
 void Viewer::lookUp() {
@@ -100,4 +103,12 @@ void Viewer::setViewer() {
 	printf("forward=[%lf, %lf, %lf]\n", forward.x, forward.y, forward.z);
 	printf("right=[%lf, %lf, %lf]\n", right.x, right.y, right.z);
 	printf("up=[%lf, %lf, %lf]\n", up.x, up.y, up.z);*/
+}
+void Viewer::printPosition()
+{
+	//printf("*****************************\n");
+	printf("position=[%lf, %lf, %lf]\n", position.x, position.y, position.z);
+	//printf("forward=[%lf, %lf, %lf]\n", forward.x, forward.y, forward.z);
+	///printf("right=[%lf, %lf, %lf]\n", right.x, right.y, right.z);
+	//printf("up=[%lf, %lf, %lf]\n", up.x, up.y, up.z);
 }

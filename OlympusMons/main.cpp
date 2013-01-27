@@ -15,6 +15,7 @@
 
 #include "Viewer.h"
 #include "Mesh.h"
+#include "texture.h"
 
 #define DISTANCE	1
 
@@ -24,11 +25,13 @@
 // modul initial in care sunt desenate poligoanele
 int mode = SOLID;
 
-Viewer view(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0);
+Viewer view(0,6,0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0);
 int mainWindow;
 Mesh mesh;
 int mesh_type = 1;
 Vector3D spotlight(0.0, 15.0, 0.0);
+
+GLint textura_iarba[4];
 
 void init(void)
 {
@@ -226,9 +229,23 @@ unsigned int numindexes;
 GLuint*  indexes;
 GLuint vertex_id, index_id;
 
+void setTexCoords()
+{
+	for(unsigned int i = 0; i < height-1; i+=2) 
+	{
+		for(unsigned int j = 0; j < width-1; j+=2) 
+		{
+			vertices[i*width+j].texture[0]=0; vertices[i*width+j].texture[1]=0;
+			vertices[i*width+j+1].texture[0]=0; vertices[i*width+j+1].texture[1]=1;
+			vertices[(i+1)*width+j+1].texture[0]=1; vertices[(i+1)*width+j+1].texture[1]=1;
+			vertices[(i+1)*width+j].texture[0]=1; vertices[(i+1)*width+j].texture[1]=0;
+		}
+	}
+}
+
 void initVBO() {
 
-	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClearColor(0.0, 0.0, 0.1, 0.0);
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glShadeModel(GL_SMOOTH);
@@ -266,8 +283,10 @@ void initVBO() {
 
 	width = mesh.getWidth();
 	height = mesh.getHeight();
+	printf("Width %u Height %u\n",width,height);
 	vertices = mesh.getVertices();
-	indexes = (GLuint*)malloc(width*height*4*sizeof(GLuint));
+	setTexCoords();
+	indexes = (GLuint*)malloc((width-1)*(height-1)*4*sizeof(GLuint));
 
 	unsigned int p = 0;
 	for(unsigned int i = 0; i < height-1; i++) {
@@ -290,7 +309,7 @@ void initVBO() {
 	
 	glGenBuffers(1, &index_id);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,  index_id);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, width * height * 4 * sizeof(GLuint), indexes, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, (width-1) * (height-1) * 4 * sizeof(GLuint), indexes, GL_STATIC_DRAW);
 }
 
 
@@ -307,33 +326,51 @@ void displayCB()
 	
 	glPushMatrix();
 
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_INDEX_ARRAY);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_id);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
 
-	glEnableVertexAttribArray(0);    //We like submitting vertices on stream 0 for no special reason
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(point_t), NULL);   //The starting point of the VBO, for the vertices
+	
 
 	//glEnableVertexAttribArray(1);    //We like submitting normals on stream 1 for no special reason
 //	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(point_t), (const GLvoid*)(3*sizeof(float)));     //The starting point of normals, 12 bytes away
 //	glVertexPointer(3, GL_FLOAT, 0, NULL);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D,textura_iarba[1]);
+
+	glTexCoordPointer(2, GL_FLOAT, sizeof(point_t),(const GLvoid*)(6*sizeof(float)));
 	glNormalPointer(GL_FLOAT, sizeof(point_t), (const GLvoid*)(3*sizeof(float))); 
 	
-	glDrawElements(GL_QUADS, numindexes, GL_UNSIGNED_INT, 0 /*index_offset*/);
-//	glDrawElements(GL_QUADS, numindexes, GL_UNSIGNED_INT, indexes);
 
+	glEnableVertexAttribArray(0);    //We like submitting vertices on stream 0 for no special reason
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(point_t), NULL);   //The starting point of the VBO, for the vertices
+
+	//glDrawElements(GL_QUADS,numindexes, GL_UNSIGNED_INT, 0 /*index_offset*/);
+	glDrawElements(GL_QUADS, numindexes, GL_UNSIGNED_INT, (const GLvoid *)indexes);
+
+	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glDisableClientState(GL_INDEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	
+	glBegin(GL_QUADS);
+		glTexCoord2f(0,0);			glVertex3f(0,0,0);
+		glTexCoord2f(0,1);			glVertex3f(0,0,1);
+		glTexCoord2f(1,1);			glVertex3f(1,0,1);
+		glTexCoord2f(1,0);			glVertex3f(1,0,0);
+	glEnd();
 
-	glutWireCube(2.0);
+	//glutWireCube(2.0);
 	glPopMatrix();
+	glDisable(GL_TEXTURE_2D);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -352,6 +389,11 @@ int main(int argc, char** argv)
 	if( !mesh.loadImage("half.tga") )
 		return 0;
 	initVBO();
+	for(int i=0;i<4;i++){
+		textura_iarba[i]=LoadTextureBMP("texturi/grass.bmp",i);
+		printf("TEX %i %i\n",i,textura_iarba[i]);
+	}
+
 
 	glutDisplayFunc(displayCB);
 	glutIdleFunc(idle);

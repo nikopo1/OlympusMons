@@ -25,6 +25,7 @@ public:
 	void lookRight();
 
 	void setViewer();
+	void printPosition();
 
 	~Viewer(void);
 };
