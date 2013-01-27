@@ -30,6 +30,10 @@ private:
 	float pixelstep;
 	float scale;
 	tgaInfo* image;
+	float* riverColor;
+	float* dirtColor;
+	float* grassColor;
+	float* snowColor;
 
 public:
 
@@ -47,7 +51,10 @@ public:
 
 	inline float inBetween(float idiv, float y1, float y2);
 	Vector3D calculateNormal(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3);
+	
+	void initColors();
 	void Mesh::setColor(point_t * points, int i , int j);
+
 	~Mesh(void);
 };
 

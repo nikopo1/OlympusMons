@@ -8,8 +8,25 @@ Mesh::Mesh(void)
 {
 	pixelstep = 1.0;
 	scale = 20.0;
+	initColors();
 }
 
+void Mesh::initColors(void)
+{
+	riverColor = (float*)malloc(4*sizeof(float));
+	if(riverColor==NULL) {printf("Eroare la alocare culori"); return;}
+	dirtColor = (float*)malloc(4*sizeof(float));
+	if(dirtColor==NULL) {printf("Eroare la alocare culori"); return;}
+	grassColor = (float*)malloc(4*sizeof(float));
+	if(grassColor==NULL) {printf("Eroare la alocare culori"); return;}
+	snowColor = (float*)malloc(4*sizeof(float));
+	if(snowColor==NULL) {printf("Eroare la alocare culori"); return;}
+
+	riverColor[0] = 0; riverColor[1] = 0; riverColor[2] = 1; riverColor[3] = 1; 
+	dirtColor [0] = 1; dirtColor [1] = 0; dirtColor [2] = 0; dirtColor [3] = 1;
+	grassColor[0] = 0; grassColor[1] = 1; grassColor[2] = 0; grassColor[3] = 1;
+	snowColor [0] = 1; snowColor [1] = 1; snowColor [2] = 1; snowColor [3] = 1;
+}
 
 Mesh::~Mesh(void)
 {
@@ -98,16 +115,35 @@ point_t* Mesh::getVertices() {
 void Mesh::setColor(point_t * points, int i , int j)
 {
 	int width = image->width;
+	float minRiver = 0.0 , maxRiver = 10.0/100.0 * scale, riverDif = maxRiver - minRiver;
+	float minDirt = 10.0/100.0 * scale, maxDirt = 15.0/100.0 * scale, dirtDif = maxDirt - minDirt;
+	float minGrass = 15.0/100.0 * scale, maxGrass = 80.0/100.0 * scale, grassDif = maxGrass - minGrass;
+	float minSnow = 80.0/100.0 * scale, maxSnow = scale, snowDif = maxSnow - minSnow;
+ 
+	float vertexHeight = points[i*width+j].position[1];
 	//setare culoare riverbed
-	if(points[i*width+j].position[1]<1.5)
+	if(vertexHeight >= minRiver && vertexHeight < maxRiver)
 	{
-		points[i*width+j].color[0]=0; points[i*width+j].color[1]=0; 
-		points[i*width+j].color[2]=1; points[i*width+j].color[3]=0;
+		points[i*width+j].color[0]=riverColor[0]; points[i*width+j].color[1]=riverColor[1]; 
+		points[i*width+j].color[2]=riverColor[2]; points[i*width+j].color[3]=riverColor[3];
 	}
-	else
+	//portiune de pamant
+	else if(vertexHeight >= minDirt && vertexHeight <maxDirt)
 	{
-		points[i*width+j].color[0]=0; points[i*width+j].color[1]=1; 
-		points[i*width+j].color[2]=0; points[i*width+j].color[3]=0;
+		points[i*width+j].color[0]=dirtColor[0]; points[i*width+j].color[1]=dirtColor[1]; 
+		points[i*width+j].color[2]=dirtColor[2]; points[i*width+j].color[3]=dirtColor[3];
+	}
+	//pajiste
+	else if(vertexHeight >= minGrass && vertexHeight < maxGrass)
+	{
+		points[i*width+j].color[0]=grassColor[0]; points[i*width+j].color[1]=grassColor[1]; 
+		points[i*width+j].color[2]=grassColor[2]; points[i*width+j].color[3]=grassColor[3];
+	}
+	//zapada
+	else if(vertexHeight >= maxSnow)
+	{
+		points[i*width+j].color[0]=snowColor[0]; points[i*width+j].color[1]=snowColor[1]; 
+		points[i*width+j].color[2]=snowColor[2]; points[i*width+j].color[3]=snowColor[3];
 	}
 }
 
@@ -206,7 +242,7 @@ void Mesh::drawDeformed(unsigned int minx, unsigned int maxx, unsigned int miny,
 	if(image == NULL)
 		return;
 
-	int i,j;
+	unsigned int i,j;
 	float step = pixelstep / (float)div;
 	float idiv;
 	float jdiv;
