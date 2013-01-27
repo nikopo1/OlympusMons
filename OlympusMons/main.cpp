@@ -363,6 +363,7 @@ void displayCB()
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_INDEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_id);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
@@ -391,6 +392,7 @@ void displayCB()
 	glVertexPointer(3, GL_FLOAT, sizeof(point_t), NULL);
 	glNormalPointer(GL_FLOAT, sizeof(point_t), (const GLvoid*)(3*sizeof(float)));
 	glTexCoordPointer(2, GL_FLOAT, sizeof(point_t), (const GLvoid*)(6*sizeof(float)));
+	glColorPointer(4, GL_FLOAT, sizeof(point_t),(const GLvoid*)(8*sizeof(float)));
 	glDrawElements(GL_QUADS,numindexes, GL_UNSIGNED_INT, 0 /*index_offset*/);
 
 	//glDrawElements(GL_QUADS, numindexes, GL_UNSIGNED_INT, (const GLvoid *)indexes);
@@ -399,6 +401,7 @@ void displayCB()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_INDEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);

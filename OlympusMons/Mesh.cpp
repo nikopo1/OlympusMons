@@ -88,11 +88,27 @@ point_t* Mesh::getVertices() {
 			ret[(i*width + j)].position[0] = i;
 			ret[(i*width + j)].position[1] = image->imageData[i*width + j] / 255.0 * scale;
 			ret[(i*width + j)].position[2] = j;
+			setColor(ret,i,j);
 		}
 		//printf("(%f %f %f)\n",ret[i*width*3+width-3],ret[i*width*3+width-2],ret[i*width*3+width-1]);
 	}
 	
 	return ret;
+}
+void Mesh::setColor(point_t * points, int i , int j)
+{
+	int width = image->width;
+	//setare culoare riverbed
+	if(points[i*width+j].position[1]<1.5)
+	{
+		points[i*width+j].color[0]=0; points[i*width+j].color[1]=0; 
+		points[i*width+j].color[2]=1; points[i*width+j].color[3]=0;
+	}
+	else
+	{
+		points[i*width+j].color[0]=0; points[i*width+j].color[1]=1; 
+		points[i*width+j].color[2]=0; points[i*width+j].color[3]=0;
+	}
 }
 
 void Mesh::drawUndeformed(GLuint list, int div) {
