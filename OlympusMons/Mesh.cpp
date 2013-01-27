@@ -23,8 +23,8 @@ void Mesh::initColors(void)
 	if(snowColor==NULL) {printf("Eroare la alocare culori"); return;}
 
 	riverColor[0] = 0; riverColor[1] = 0; riverColor[2] = 1; riverColor[3] = 1; 
-	dirtColor [0] = 1; dirtColor [1] = 0; dirtColor [2] = 0; dirtColor [3] = 1;
-	grassColor[0] = 0; grassColor[1] = 1; grassColor[2] = 0; grassColor[3] = 1;
+	dirtColor [0] = 0.5; dirtColor [1] = 0.2; dirtColor [2] = 0.1; dirtColor [3] = 1;
+	grassColor[0] = 0; grassColor[1] = 0.8; grassColor[2] = 0; grassColor[3] = 1;
 	snowColor [0] = 1; snowColor [1] = 1; snowColor [2] = 1; snowColor [3] = 1;
 }
 
@@ -117,33 +117,38 @@ void Mesh::setColor(point_t * points, int i , int j)
 	int width = image->width;
 	float minRiver = 0.0 , maxRiver = 10.0/100.0 * scale, riverDif = maxRiver - minRiver;
 	float minDirt = 10.0/100.0 * scale, maxDirt = 15.0/100.0 * scale, dirtDif = maxDirt - minDirt;
-	float minGrass = 15.0/100.0 * scale, maxGrass = 80.0/100.0 * scale, grassDif = maxGrass - minGrass;
-	float minSnow = 80.0/100.0 * scale, maxSnow = scale, snowDif = maxSnow - minSnow;
+	float minGrass = 15.0/100.0 * scale, maxGrass = 50.0/100.0 * scale, grassDif = maxGrass - minGrass;
+	float minSnow = 50.0/100.0 * scale, maxSnow = scale, snowDif = maxSnow - minSnow;
  
 	float vertexHeight = points[i*width+j].position[1];
+	float gap = 0.9;
 	//setare culoare riverbed
 	if(vertexHeight >= minRiver && vertexHeight < maxRiver)
 	{
-		points[i*width+j].color[0]=riverColor[0]; points[i*width+j].color[1]=riverColor[1]; 
-		points[i*width+j].color[2]=riverColor[2]; points[i*width+j].color[3]=riverColor[3];
+		float pondere = (vertexHeight - minRiver)*gap/riverDif;
+		points[i*width+j].color[0]=riverColor[0]*pondere; points[i*width+j].color[1]=riverColor[1]*pondere; 
+		points[i*width+j].color[2]=riverColor[2]*pondere; points[i*width+j].color[3]=riverColor[3]*pondere;
 	}
 	//portiune de pamant
 	else if(vertexHeight >= minDirt && vertexHeight <maxDirt)
 	{
-		points[i*width+j].color[0]=dirtColor[0]; points[i*width+j].color[1]=dirtColor[1]; 
-		points[i*width+j].color[2]=dirtColor[2]; points[i*width+j].color[3]=dirtColor[3];
+		float pondere = (vertexHeight - minDirt)*gap/dirtDif;
+		points[i*width+j].color[0]=dirtColor[0]*pondere; points[i*width+j].color[1]=dirtColor[1]*pondere; 
+		points[i*width+j].color[2]=dirtColor[2]*pondere; points[i*width+j].color[3]=dirtColor[3]*pondere;
 	}
 	//pajiste
 	else if(vertexHeight >= minGrass && vertexHeight < maxGrass)
 	{
-		points[i*width+j].color[0]=grassColor[0]; points[i*width+j].color[1]=grassColor[1]; 
-		points[i*width+j].color[2]=grassColor[2]; points[i*width+j].color[3]=grassColor[3];
+		float pondere = (vertexHeight - minGrass)*gap/grassDif;
+		points[i*width+j].color[0]=grassColor[0]*pondere; points[i*width+j].color[1]=grassColor[1]*pondere; 
+		points[i*width+j].color[2]=grassColor[2]*pondere; points[i*width+j].color[3]=grassColor[3]*pondere;
 	}
 	//zapada
-	else if(vertexHeight >= maxSnow)
+	else if(vertexHeight >= minSnow)
 	{
-		points[i*width+j].color[0]=snowColor[0]; points[i*width+j].color[1]=snowColor[1]; 
-		points[i*width+j].color[2]=snowColor[2]; points[i*width+j].color[3]=snowColor[3];
+		float pondere = (vertexHeight - minSnow)*gap/snowDif;
+		points[i*width+j].color[0]=snowColor[0]*1/pondere; points[i*width+j].color[1]=snowColor[1]*1/pondere; 
+		points[i*width+j].color[2]=snowColor[2]*1/pondere; points[i*width+j].color[3]=snowColor[3]*1/pondere;
 	}
 }
 
@@ -250,6 +255,7 @@ void Mesh::drawDeformed(unsigned int minx, unsigned int maxx, unsigned int miny,
 	float y1, y2, y3, y4;
 	float y1div, y2div, y3div, y4div;
 	Vector3D normal1, normal2, normal;
+	Vector3D color1,color2,color3,color4;
 
 	int width, height;
 	width = image->width;
@@ -276,19 +282,66 @@ void Mesh::drawDeformed(unsigned int minx, unsigned int maxx, unsigned int miny,
 					// astea sunt niste noromale calculate de mine, nu prea sunt decente pentru ca sunt per suprafata
 					normal1 = calculateNormal(i+idiv, y1div, j+jdiv, i+idiv, y2div, j+jdiv+step, i+idiv+step, y3div, j+jdiv+step);
 					normal2 = calculateNormal(i+idiv, y1div, j+jdiv, i+idiv+step, y3div, j+jdiv+step, i+idiv+step, y4div, j+jdiv);
-
+					//normal2 = calculateNormal(i+idiv, y1div, j+jdiv,i+idiv+step, y4div, j+jdiv,i+idiv+step, y3div, j+jdiv+step);
 					normal = (normal1 + normal2).Normalize();
-					glNormal3f(normal.x, normal.y, normal.z);
+					//if(onEdge());
+					//normal = computeNormalPerVertex(idiv,jdiv,);
 					
+					color1 = computeColorPerVertex(y1div);
+					color2 = computeColorPerVertex(y2div);
+					color3 = computeColorPerVertex(y3div);
+					color4 = computeColorPerVertex(y4div);
+
+					glNormal3f(normal.x, normal.y, normal.z);
+					glColor3f(color1.x,color1.y,color1.z);
 					glVertex3f(i+idiv, y1div, j+jdiv);			//1
+					glColor3f(color2.x,color2.y,color2.z);
 					glVertex3f(i+idiv, y2div, j+jdiv+step);		//2
+					glColor3f(color3.x,color3.y,color3.z);
 					glVertex3f(i+idiv+step, y3div, j+jdiv+step);//3
+					glColor3f(color4.x,color4.y,color4.z);
 					glVertex3f(i+idiv+step, y4div, j+jdiv);		//4					
 				}
 		}
 	glEnd();
 }
+Vector3D Mesh::computeColorPerVertex(float height)
+{
+	float minRiver = 0.0 , maxRiver = 10.0/100.0 * scale, riverDif = maxRiver - minRiver;
+	float minDirt = 10.0/100.0 * scale, maxDirt = 15.0/100.0 * scale, dirtDif = maxDirt - minDirt;
+	float minGrass = 15.0/100.0 * scale, maxGrass = 50.0/100.0 * scale, grassDif = maxGrass - minGrass;
+	float minSnow = 50.0/100.0 * scale, maxSnow = scale, snowDif = maxSnow - minSnow;
 
+	float gap = 0.9;
+	//setare culoare riverbed
+	if(height >= minRiver && height < maxRiver)
+	{
+		float pondere = (height - minRiver)*gap/riverDif;
+		float red=riverColor[0]*pondere, green = riverColor[1]*pondere, blue = riverColor[2]*pondere;
+		return Vector3D(red,green,blue);
+	}
+	//portiune de pamant
+	else if(height >= minDirt && height <maxDirt)
+	{
+		float pondere = (height - minDirt)*gap/dirtDif;
+		float red=dirtColor[0]*pondere, green = dirtColor[1]*pondere, blue = dirtColor[2]*pondere;
+		return Vector3D(red,green,blue);
+	}
+	//pajiste
+	else if(height >= minGrass && height < maxGrass)
+	{
+		float pondere = (height - minGrass)*gap/grassDif;
+		float red=grassColor[0]*pondere, green = grassColor[1]*pondere, blue = grassColor[2]*pondere;
+		return Vector3D(red,green,blue);
+	}
+	//zapada
+	else if(height >= minSnow)
+	{
+		float pondere = (height - minSnow)*gap/snowDif;
+		float red=snowColor[0]*pondere, green = snowColor[1]*pondere, blue = snowColor[2]*pondere;
+		return Vector3D(red,green,blue);
+	}
+}
 inline float Mesh::inBetween(float idiv, float y1, float y2) {
 
 	return (y1 * (pixelstep-idiv) + y2 * idiv)/pixelstep;
