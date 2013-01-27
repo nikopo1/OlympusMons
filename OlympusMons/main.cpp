@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Laborator 2 -- SPG
 // 
 #pragma comment(lib, "opengl32.lib")
@@ -335,7 +335,7 @@ void displayCB()
 
 	view.setViewer();
 
-	unsigned int perimeter = 2;
+	unsigned int perimeter = 8;
 	unsigned int camera_x = (unsigned int)view.getPosition(0);
 	unsigned int camera_y = (unsigned int)view.getPosition(1);
 	unsigned int camera_z = (unsigned int)view.getPosition(2);
@@ -344,28 +344,6 @@ void displayCB()
 	unsigned int pmaxx = camera_x + perimeter;
 	unsigned int pminz = camera_z - perimeter;
 	unsigned int pmaxz = camera_z + perimeter;
-
-	GLuint* ptr = (GLuint*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
-	if(ptr)
-	{
-		unsigned int p = 0;
-		for(unsigned int i = 0; i < height-1; i++) {
-			for(unsigned int j = 0; j < width-1; j++) {
-				if(pminx < j && j < pmaxx && pminz < i && i < pmaxz) {
-					printf("dafuq");
-					continue;
-				}
-				ptr[p++] = i*width + j;
-				ptr[p++] = i*width + j + 1;
-				ptr[p++] = (i+1)*width + j + 1;
-				ptr[p++] = (i+1)*width + j;
-			}
-		}
-		numindexes = p;
-		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER); // unmap it after use
-	} else {
-		printf("%d, %s\n",glGetError());
-	}
 
 	glPushMatrix();
 
@@ -378,6 +356,27 @@ void displayCB()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
 	glBindTexture(GL_TEXTURE_2D,textura_iarba[1]);
 
+	GLuint* ptr = (GLuint*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+	if(ptr)
+	{
+		unsigned int p = 0;
+		for(unsigned int i = 0; i < height-1; i++) {
+			for(unsigned int j = 0; j < width-1; j++) {
+				if(pminx < i && i < pmaxx && pminz < j && j < pmaxz) {
+					printf("dafuq");
+					continue;
+				}
+				ptr[p++] = i*width + j;
+				ptr[p++] = i*width + j + 1;
+				ptr[p++] = (i+1)*width + j + 1;
+				ptr[p++] = (i+1)*width + j;
+			}
+		}
+		numindexes = p;
+		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER); // unmap it after use
+	} else {
+		printf("%d\n",glGetError());
+	}
 
 	glVertexPointer(3, GL_FLOAT, sizeof(point_t), NULL);
 	glNormalPointer(GL_FLOAT, sizeof(point_t), (const GLvoid*)(3*sizeof(float)));
