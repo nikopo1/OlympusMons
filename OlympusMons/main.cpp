@@ -268,6 +268,18 @@ void initVBO() {
 	if( eroare ) {
 		printf("Error\n");
 	}
+	if( glewIsSupported("GL_EXT_texture_filter_anisotropic") ) {
+		GLfloat fLargest;
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest);
+		printf("Largest: %f\n", fLargest);
+		fflush(stdout);
+	}
+
+	if( glewIsSupported("GL_ARB_multitexture") ) {
+		GLint iUnits; 
+		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iUnits);
+		printf("Number of textures= %d\n", iUnits);
+	}
 	if( glewIsSupported("GL_ARB_vertex_buffer_object") ) {
 		printf("Supported.\n");
 		int maxvertices, maxindices;
@@ -362,10 +374,8 @@ void displayCB()
 		unsigned int p = 0;
 		for(unsigned int i = 0; i < height-1; i++) {
 			for(unsigned int j = 0; j < width-1; j++) {
-				if(pminx < i && i < pmaxx && pminz < j && j < pmaxz) {
-					printf("dafuq");
+				if(pminx < i && i < pmaxx && pminz < j && j < pmaxz)
 					continue;
-				}
 				ptr[p++] = i*width + j;
 				ptr[p++] = i*width + j + 1;
 				ptr[p++] = (i+1)*width + j + 1;
